@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col justify-center items-center mt-10">
-    <div id="text-input" class="max-w-3xl mx-auto w-full mb-8">
+    <div id="text-input" class="max-w-4xl mx-auto w-full mb-8">
       <label for="message" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
         >Input Here</label
       >

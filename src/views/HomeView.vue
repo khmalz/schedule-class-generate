@@ -1,8 +1,8 @@
 <template>
-  <main class="py-8 max-w-3xl mx-auto w-full">
+  <main class="py-8 max-w-4xl mx-auto w-full">
     <h1 class="text-center text-4xl font-bold">Schedule Generate by Text</h1>
 
-    <div class="max-w-3xl mx-auto p-4 bg-white rounded-2xl shadow-md border mt-5" id="guide">
+    <div class="max-w-4xl mx-auto p-4 bg-white rounded-2xl shadow-md border mt-5" id="guide">
       <h2 class="text-xl font-semibold mb-2 text-gray-800">📘 Schedule Input Guide</h2>
       <p class="text-sm text-gray-600 mb-4">
         Please enter your schedule in the <strong>text area</strong> below using the following
@@ -54,7 +54,7 @@ Pendidikan Agama, 10.00-12.30, online
 
     <div
       v-if="warnings.length === 0 && result"
-      class="max-w-3xl mx-auto p-4 bg-white rounded-2xl shadow-md border mt-5"
+      class="max-w-4xl mx-auto p-4 bg-white rounded-2xl shadow-md border mt-5"
       id="result"
     >
       <h2 class="text-xl font-semibold mb-2 text-gray-800">📝 Schedule Result</h2>
@@ -80,7 +80,8 @@ const generate = () => {
     return;
   }
 
-  result.value = parseSchedule(input.value);
+  const [schedule] = parseSchedule(input.value);
+  result.value = schedule;
 };
 
 type ScheduleItem = {
@@ -91,25 +92,25 @@ type ScheduleItem = {
 
 type ScheduleMap = Record<string, ScheduleItem[]>;
 
-function parseSchedule(input: string): ScheduleMap {
+function parseSchedule(input: string): [ScheduleMap, Date, Date] {
   let min_time: Date | null = null;
   let max_time: Date | null = null;
 
   const dayMap: Record<string, string> = {
-    senin: "Monday",
-    monday: "Monday",
-    selasa: "Tuesday",
-    tuesday: "Tuesday",
-    rabu: "Wednesday",
-    wednesday: "Wednesday",
-    kamis: "Thursday",
-    thursday: "Thursday",
-    jumat: "Friday",
-    friday: "Friday",
-    sabtu: "Saturday",
-    saturday: "Saturday",
-    minggu: "Sunday",
-    sunday: "Sunday",
+    senin: "Senin",
+    monday: "Senin",
+    selasa: "Selasa",
+    tuesday: "Selasa",
+    rabu: "Rabu",
+    wednesday: "Rabu",
+    kamis: "Kamis",
+    thursday: "Kamis",
+    jumat: "Jumat",
+    friday: "Jumat",
+    sabtu: "Sabtu",
+    saturday: "Sabtu",
+    minggu: "Minggu",
+    sunday: "Minggu",
   };
 
   const lines = input.trim().split("\n");
@@ -143,7 +144,7 @@ function parseSchedule(input: string): ScheduleMap {
 
   console.log({ min_time, max_time });
 
-  return schedule;
+  return [schedule, min_time, max_time];
 }
 
 function parseTime(time: string) {
