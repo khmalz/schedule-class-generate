@@ -65,33 +65,17 @@
 
 <script setup lang="ts">
 const days = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
-const hours = [];
+const hours: string[] = [];
 for (let i = 8; i <= 17; i++) {
   hours.push(`${String(i).padStart(2, "0")}:00`);
 }
 
-const schedule = {
-  Senin: [
-    {
-      subject: "Matematika",
-      time: "10.00-11.40",
-      desc: "Ruang 101",
-    },
-  ],
-  Selasa: [
-    {
-      subject: "Bahasa Inggris",
-      time: "13.00-14.40",
-      desc: "Ruang 501",
-    },
-    {
-      subject: "Pendidikan Agama",
-      time: "10.30-12.30",
-      desc: "Lorem ipsum dolor sit amet consectetur",
-    },
-  ],
-};
+const { schedule, times = { min: "08:00", max: "17:00" } } = defineProps<{
+  schedule: ScheduleMap;
+  times?: { min: string; max: string };
+}>();
 
+import type { ScheduleMap } from "@/types/schedule";
 import { onMounted } from "vue";
 
 onMounted(() => {
@@ -113,17 +97,26 @@ function getQuarterID(day: string, time: string): string {
   return `${day}_${stringHour}.00_q${quarter}`;
 }
 
-function paintSchedule(data) {
+function paintSchedule(data: ScheduleMap) {
+  console.log("ADA GA WOy");
+
   Object.entries(data).forEach(([day, items]) => {
     items.forEach(({ subject, time, desc }) => {
       const [startStr, endStr] = time.split("-").map((t) => t.trim());
 
+      console.log({ day, startStr, endStr, subject, desc });
       createEventOverlay(day, startStr, endStr, subject, desc);
     });
   });
 }
 
-function createEventOverlay(day, startStr, endStr, subject, desc) {
+function createEventOverlay(
+  day: string,
+  startStr: string,
+  endStr: string,
+  subject: string,
+  desc: string
+) {
   const startID = getQuarterID(day, startStr);
   const endID = getQuarterID(day, endStr);
 
@@ -135,9 +128,11 @@ function createEventOverlay(day, startStr, endStr, subject, desc) {
     return;
   }
 
+  const startElParent = startEl.parentNode as HTMLElement;
+
   const startRect = startEl.getBoundingClientRect();
   const endRect = endEl.getBoundingClientRect();
-  const parentRect = startEl.parentNode.getBoundingClientRect();
+  const parentRect = startElParent.getBoundingClientRect();
   const height = endRect.bottom - startRect.top;
   const top = startRect.top - parentRect.top;
 
@@ -155,7 +150,7 @@ function createEventOverlay(day, startStr, endStr, subject, desc) {
     </div>
   `;
 
-  startEl.parentNode.insertAdjacentHTML("beforeend", overlayHTML);
+  startElParent.insertAdjacentHTML("beforeend", overlayHTML);
 }
 </script>
 

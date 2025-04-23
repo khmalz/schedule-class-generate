@@ -14,7 +14,9 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.4",
+    "html2canvas-pro": "^1.5.8",
     "pinia": "^3.0.1",
+    "sweetalert2": "^11.19.1",
     "tailwindcss": "^4.1.4",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"

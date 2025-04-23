@@ -58,24 +58,103 @@ Pendidikan Agama, 10.00-12.30, online
       </ul>
     </div>
 
+    <div v-if="isLoading" class="text-white mt-2">Rendering preview...</div>
+
     <div
-      v-if="warnings.length === 0 && result"
+      v-if="warnings.length === 0 && result && !isLoading"
       class="max-w-4xl lg:max-w-7xl mx-auto p-4 bg-white rounded-2xl shadow-md border mt-5"
       id="result"
     >
-      <h2 class="text-xl md:text-2xl font-semibold mb-2 text-gray-800">📝 Schedule Result</h2>
-      <pre class="bg-gray-100 text-sm text-gray-800 p-4 rounded-lg whitespace-pre-wrap"
-        >{{ result }}
-      </pre>
+      <h2 class="text-xl md:text-2xl font-semibold text-gray-800">📝 Schedule Result</h2>
+
+      <div class="py-2 flex gap-x-3" v-if="imageSrc">
+        <img :src="imageSrc" class="border rounded w-3xl" />
+
+        <div class="w-full">
+          <button
+            @click="downloadImage"
+            class="bg-gray-600 hover:bg-gray-700 text-white p-4 rounded border w-1/2 flex items-center justify-between"
+          >
+            <span>Export to Image</span>
+            <svg
+              class="w-6 h-6 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M9 2.221V7H4.221a2 2 0 0 1 .365-.5L8.5 2.586A2 2 0 0 1 9 2.22ZM11 2v5a2 2 0 0 1-2 2H4v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-7Zm.394 9.553a1 1 0 0 0-1.817.062l-2.5 6A1 1 0 0 0 8 19h8a1 1 0 0 0 .894-1.447l-2-4A1 1 0 0 0 13.2 13.4l-.53.706-1.276-2.553ZM13 9.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="result">
+      <div ref="imageTarget" class="fixed left-[200vw] top-0 p-4 bg-cyan-950 rounded shadow z-[-1]">
+        <schedule-view key="3" :schedule="result" />
+      </div>
     </div>
   </main>
 </template>
 
 <script setup lang="ts">
 import InputSchedule from "@/components/input-schedule.vue";
-import { ref } from "vue";
+import { nextTick, ref } from "vue";
+import type { ScheduleMap } from "@/types/schedule";
+import html2canvas from "html2canvas-pro";
+import ScheduleView from "./ScheduleView.vue";
+import Swal from "sweetalert2";
+
+const imageTarget = ref(null);
+const imageSrc = ref<string | undefined>(undefined);
+
+const isLoading = ref(false);
+
+const generateImage = async () => {
+  isLoading.value = true;
+  showSweetLoading();
+  await nextTick();
+
+  const element = imageTarget.value;
+  if (!element) {
+    isLoading.value = false;
+    Swal.close();
+    return;
+  }
+
+  const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+  imageSrc.value = canvas.toDataURL("image/jpg");
+
+  isLoading.value = false;
+  Swal.close();
+};
+
+function showSweetLoading() {
+  return Swal.fire({
+    title: "Wait, Generating...",
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    },
+  });
+}
+
+function downloadImage() {
+  if (!imageSrc.value) return;
+  const link = document.createElement("a");
+  link.href = imageSrc.value;
+  link.download = "schedule-preview.jpg";
+  link.click();
+}
+
+// -----------------------------------------------------------------------------------
 
 const input = ref<string>("");
+
 const result = ref<ScheduleMap | null>(null);
 const warnings = ref<string[]>([]);
 
@@ -86,17 +165,14 @@ const generate = () => {
     return;
   }
 
-  const [schedule] = parseSchedule(input.value);
+  const [schedule, min, max] = parseSchedule(input.value);
+  console.log({ min, max });
   result.value = schedule;
-};
 
-type ScheduleItem = {
-  subject: string;
-  time: string;
-  desc: string;
+  nextTick(() => {
+    generateImage();
+  });
 };
-
-type ScheduleMap = Record<string, ScheduleItem[]>;
 
 function parseSchedule(input: string): [ScheduleMap, Date, Date] {
   let min_time: Date | null = null;
@@ -148,7 +224,7 @@ function parseSchedule(input: string): [ScheduleMap, Date, Date] {
     }
   });
 
-  console.log({ min_time, max_time });
+  if (!min_time || !max_time) return [schedule, new Date(), new Date()];
 
   return [schedule, min_time, max_time];
 }
