@@ -1,7 +1,7 @@
 <template>
   <main class="py-8 max-w-4xl lg:max-w-7xl mx-auto w-full">
     <h1 class="text-center text-2xl md:text-3xl lg:text-4xl font-bold">
-      Schedule Generate by Text
+      Schedule Class Generate by Text
     </h1>
 
     <div
@@ -49,19 +49,19 @@ Pendidikan Agama, 10.00-12.30, online
     <input-schedule @click="generate" v-model="input" />
 
     <div
-      v-if="warnings.length"
+      v-if="warningsStore.warnings.length"
       class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded-md mt-6"
     >
       <h3 class="font-semibold mb-2 text-base md:text-lg">⚠️ Warning</h3>
       <ul class="list-disc pl-5 space-y-1 text-sm md:text-base">
-        <li v-for="(warn, index) in warnings" :key="index">{{ warn }}</li>
+        <li v-for="(warn, index) in warningsStore.warnings" :key="index">{{ warn }}</li>
       </ul>
     </div>
 
-    <div v-if="isLoading" class="text-white mt-2">Rendering preview...</div>
+    <div v-if="loadingStore.isLoading" class="text-white mt-2">Rendering preview...</div>
 
     <div
-      v-if="warnings.length === 0 && result && !isLoading"
+      v-if="warningsStore.warnings.length === 0 && result && !loadingStore.isLoading"
       class="max-w-4xl lg:max-w-7xl mx-auto p-4 bg-white rounded-2xl shadow-md border mt-5"
       id="result"
     >
@@ -107,41 +107,33 @@ import { nextTick, ref } from "vue";
 import type { ScheduleMap } from "@/types/schedule";
 import html2canvas from "html2canvas-pro";
 import ScheduleView from "./ScheduleView.vue";
-import Swal from "sweetalert2";
+import { useScheduleStore } from "@/stores/schedule";
+import { convertTimeToNumber, normalizeTime, parseTime } from "@/utils/time";
+import { useLoadingStore } from "@/stores/loading";
+import { useWarningsStore } from "@/stores/warning";
 
 const imageTarget = ref(null);
 const imageSrc = ref<string | undefined>(undefined);
 
-const isLoading = ref(false);
+const loadingStore = useLoadingStore();
+const warningsStore = useWarningsStore();
+const scheduleStore = useScheduleStore();
 
 const generateImage = async () => {
-  isLoading.value = true;
-  showSweetLoading();
+  loadingStore.startLoading();
   await nextTick();
 
   const element = imageTarget.value;
   if (!element) {
-    isLoading.value = false;
-    Swal.close();
+    loadingStore.stopLoading();
     return;
   }
 
   const canvas = await html2canvas(element, { scale: 2, useCORS: true });
   imageSrc.value = canvas.toDataURL("image/jpg");
 
-  isLoading.value = false;
-  Swal.close();
+  loadingStore.stopLoading();
 };
-
-function showSweetLoading() {
-  return Swal.fire({
-    title: "Wait, Generating...",
-    allowOutsideClick: false,
-    didOpen: () => {
-      Swal.showLoading();
-    },
-  });
-}
 
 function downloadImage() {
   if (!imageSrc.value) return;
@@ -154,20 +146,19 @@ function downloadImage() {
 // -----------------------------------------------------------------------------------
 
 const input = ref<string>("");
-
 const result = ref<ScheduleMap | null>(null);
-const warnings = ref<string[]>([]);
-const times = ref<{ min: number; max: number }>({ min: 8, max: 17 });
+const times = ref<{ min: number; max: number }>();
 
 const generate = () => {
-  warnings.value = validateInput(input.value);
-  if (warnings.value.length > 0) {
+  const warnings = validateInput(input.value);
+  warnings.forEach((warning) => warningsStore.addWarning(warning));
+
+  if (warningsStore.warnings.length > 0) {
     result.value = null;
     return;
   }
 
-  const [schedule, min, max] = parseSchedule(input.value);
-  console.log("INI DISINI");
+  const [schedule, min, max] = generateSchedule(input.value);
   result.value = schedule;
   times.value = { min: min, max: max };
 
@@ -176,7 +167,7 @@ const generate = () => {
   });
 };
 
-function parseSchedule(input: string): [ScheduleMap, number, number] {
+function generateSchedule(input: string): [ScheduleMap, number, number] {
   let min_time: Date | null = null;
   let max_time: Date | null = null;
 
@@ -198,7 +189,9 @@ function parseSchedule(input: string): [ScheduleMap, number, number] {
   };
 
   const lines = input.trim().split("\n");
-  const schedule: ScheduleMap = {};
+
+  scheduleStore.resetSchedule();
+
   let currentDay = "";
 
   lines.forEach((line: string) => {
@@ -211,10 +204,6 @@ function parseSchedule(input: string): [ScheduleMap, number, number] {
 
     if (foundDay) {
       currentDay = foundDay;
-
-      if (!schedule[currentDay]) {
-        schedule[currentDay] = [];
-      }
     } else if (currentDay) {
       const [subject, time, desc] = line.split(",").map((p) => p.trim());
       const { start, end } = parseTime(time);
@@ -222,59 +211,16 @@ function parseSchedule(input: string): [ScheduleMap, number, number] {
       if (!min_time || start < min_time) min_time = start;
       if (!max_time || end > max_time) max_time = end;
 
-      schedule[currentDay].push({ subject, time, desc });
+      scheduleStore.addSchedule(currentDay, { subject, time, desc });
     }
   });
 
-  if (!min_time || !max_time) return [schedule, 8, 17];
+  if (!min_time || !max_time) return [scheduleStore.schedule, 8, 17];
 
   const min_number: number = convertTimeToNumber({ time: min_time, isFloor: true });
   const max_number: number = convertTimeToNumber({ time: max_time, isCeil: true });
 
-  return [schedule, min_number, max_number];
-}
-
-function parseTime(time: string) {
-  const [startStr, endStr] = time.split("-").map((s) => s.trim());
-  const today = new Date().toISOString().split("T")[0];
-
-  const start = new Date(`${today}T${normalizeTime(startStr)}`);
-  const end = new Date(`${today}T${normalizeTime(endStr)}`);
-
-  return { start, end };
-}
-
-function normalizeTime(input: string): string {
-  const parts = input.replace(/\./g, ":").split(":");
-  const [hour, minute] = parts;
-
-  const hh = hour.padStart(2, "0");
-  const mm = (minute || "00").padStart(2, "0");
-
-  return `${hh}:${mm}:00`;
-}
-
-function convertTimeToNumber({
-  time,
-  isFloor = false,
-  isCeil = false,
-}: {
-  time: Date;
-  isFloor?: boolean;
-  isCeil?: boolean;
-}): number {
-  const hour = time.getHours();
-  const minute = time.getMinutes();
-
-  if (isFloor) {
-    return hour;
-  }
-
-  if (isCeil) {
-    return minute === 0 ? hour : hour + 1;
-  }
-
-  return hour + minute / 60;
+  return [scheduleStore.schedule, min_number, max_number];
 }
 
 function validateInput(input: string): string[] {
