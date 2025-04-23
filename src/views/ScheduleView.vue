@@ -64,19 +64,19 @@
 </template>
 
 <script setup lang="ts">
+const { schedule, times = { min: 8, max: 17 } } = defineProps<{
+  schedule: ScheduleMap;
+  times?: { min: number; max: number };
+}>();
+
 const days = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
-const hours: string[] = [];
-for (let i = 8; i <= 17; i++) {
+const hours: string[] = reactive([]);
+for (let i = times.min; i <= times.max; i++) {
   hours.push(`${String(i).padStart(2, "0")}:00`);
 }
 
-const { schedule, times = { min: "08:00", max: "17:00" } } = defineProps<{
-  schedule: ScheduleMap;
-  times?: { min: string; max: string };
-}>();
-
 import type { ScheduleMap } from "@/types/schedule";
-import { onMounted } from "vue";
+import { onMounted, reactive } from "vue";
 
 onMounted(() => {
   paintSchedule(schedule);

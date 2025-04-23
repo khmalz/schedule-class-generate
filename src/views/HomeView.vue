@@ -95,7 +95,7 @@ Pendidikan Agama, 10.00-12.30, online
 
     <div v-if="result">
       <div ref="imageTarget" class="fixed left-[200vw] top-0 p-4 bg-cyan-950 rounded shadow z-[-1]">
-        <schedule-view key="3" :schedule="result" />
+        <schedule-view key="3" :schedule="result" :times="times" />
       </div>
     </div>
   </main>
@@ -157,6 +157,7 @@ const input = ref<string>("");
 
 const result = ref<ScheduleMap | null>(null);
 const warnings = ref<string[]>([]);
+const times = ref<{ min: number; max: number }>({ min: 8, max: 17 });
 
 const generate = () => {
   warnings.value = validateInput(input.value);
@@ -166,15 +167,16 @@ const generate = () => {
   }
 
   const [schedule, min, max] = parseSchedule(input.value);
-  console.log({ min, max });
+  console.log("INI DISINI");
   result.value = schedule;
+  times.value = { min: min, max: max };
 
   nextTick(() => {
     generateImage();
   });
 };
 
-function parseSchedule(input: string): [ScheduleMap, Date, Date] {
+function parseSchedule(input: string): [ScheduleMap, number, number] {
   let min_time: Date | null = null;
   let max_time: Date | null = null;
 
@@ -224,9 +226,12 @@ function parseSchedule(input: string): [ScheduleMap, Date, Date] {
     }
   });
 
-  if (!min_time || !max_time) return [schedule, new Date(), new Date()];
+  if (!min_time || !max_time) return [schedule, 8, 17];
 
-  return [schedule, min_time, max_time];
+  const min_number: number = convertTimeToNumber({ time: min_time, isFloor: true });
+  const max_number: number = convertTimeToNumber({ time: max_time, isCeil: true });
+
+  return [schedule, min_number, max_number];
 }
 
 function parseTime(time: string) {
@@ -247,6 +252,29 @@ function normalizeTime(input: string): string {
   const mm = (minute || "00").padStart(2, "0");
 
   return `${hh}:${mm}:00`;
+}
+
+function convertTimeToNumber({
+  time,
+  isFloor = false,
+  isCeil = false,
+}: {
+  time: Date;
+  isFloor?: boolean;
+  isCeil?: boolean;
+}): number {
+  const hour = time.getHours();
+  const minute = time.getMinutes();
+
+  if (isFloor) {
+    return hour;
+  }
+
+  if (isCeil) {
+    return minute === 0 ? hour : hour + 1;
+  }
+
+  return hour + minute / 60;
 }
 
 function validateInput(input: string): string[] {
