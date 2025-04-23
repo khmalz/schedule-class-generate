@@ -65,15 +65,15 @@ Pendidikan Agama, 10.00-12.30, online
       class="max-w-4xl lg:max-w-7xl mx-auto p-4 bg-white rounded-2xl shadow-md border mt-5"
       id="result"
     >
-      <h2 class="text-xl md:text-2xl font-semibold text-gray-800">📝 Schedule Result</h2>
+      <h2 class="text-xl md:text-2xl font-semibold text-gray-800 mb-2">📝 Schedule Result</h2>
 
-      <div class="py-2 flex gap-x-3" v-if="imageSrc">
+      <div class="py-2 flex flex-col lg:flex-row lg:gap-x-3 gap-y-2" v-if="imageSrc">
         <img :src="imageSrc" class="border rounded w-3xl" />
 
         <div class="w-full">
           <button
             @click="downloadImage"
-            class="bg-gray-600 hover:bg-gray-700 text-white p-4 rounded border w-1/2 flex items-center justify-between"
+            class="bg-gray-600 hover:bg-gray-700 text-white p-2 md:p-4 lg:p-5 rounded border text-sm md:text-base flex items-center px-4 gap-x-2"
           >
             <span>Export to Image</span>
             <svg
