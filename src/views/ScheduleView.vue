@@ -101,11 +101,11 @@ function paintSchedule(data: ScheduleMap) {
   console.log("ADA GA WOy");
 
   Object.entries(data).forEach(([day, items]) => {
-    items.forEach(({ subject, time, desc }) => {
+    items.forEach(({ subject, time, desc, color }) => {
       const [startStr, endStr] = time.split("-").map((t) => t.trim());
 
       console.log({ day, startStr, endStr, subject, desc });
-      createEventOverlay(day, startStr, endStr, subject, desc);
+      createEventOverlay(day, startStr, endStr, subject, desc, color);
     });
   });
 }
@@ -115,7 +115,8 @@ function createEventOverlay(
   startStr: string,
   endStr: string,
   subject: string,
-  desc: string
+  desc: string,
+  color: string
 ) {
   const startID = getQuarterID(day, startStr);
   const endID = getQuarterID(day, endStr);
@@ -137,7 +138,7 @@ function createEventOverlay(
   const top = startRect.top - parentRect.top;
 
   const overlayHTML = `
-    <div class="absolute left-0 right-0 border rounded-xs bg-green-300 px-1 text-black" style="height: ${height}px; top: ${top}px;">
+    <div class="absolute left-0 right-0 border rounded-xs ${color} px-1 text-black" style="height: ${height}px; top: ${top}px;">
       <div>
         <div class="font-semibold text-sm md:text-base lg:text-lg">${subject}</div>
         <div class="${

@@ -111,6 +111,7 @@ import { useScheduleStore } from "@/stores/schedule";
 import { convertTimeToNumber, normalizeTime, parseTime } from "@/utils/time";
 import { useLoadingStore } from "@/stores/loading";
 import { useWarningsStore } from "@/stores/warning";
+import { useColorStore } from "@/stores/colors";
 
 const imageTarget = ref(null);
 const imageSrc = ref<string | undefined>(undefined);
@@ -118,6 +119,7 @@ const imageSrc = ref<string | undefined>(undefined);
 const loadingStore = useLoadingStore();
 const warningsStore = useWarningsStore();
 const scheduleStore = useScheduleStore();
+const colorsStore = useColorStore();
 
 const generateImage = async () => {
   loadingStore.startLoading();
@@ -211,7 +213,8 @@ function generateSchedule(input: string): [ScheduleMap, number, number] {
       if (!min_time || start < min_time) min_time = start;
       if (!max_time || end > max_time) max_time = end;
 
-      scheduleStore.addSchedule(currentDay, { subject, time, desc });
+      const color = colorsStore.getRandomColor();
+      scheduleStore.addSchedule(currentDay, { subject, time, desc, color });
     }
   });
 
