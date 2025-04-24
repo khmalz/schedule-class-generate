@@ -229,7 +229,7 @@ function generateSchedule(input: string): [ScheduleMap, number, number] {
 
   const min_number: number = convertTimeToNumber({ time: min_time, isFloor: true });
   let max_number: number = convertTimeToNumber({ time: max_time, isCeil: true });
-  if (max_number == 0) max_number = 24;
+  if ([0, 24].includes(max_number)) max_number = 23;
 
   return [scheduleStore.schedule, min_number, max_number];
 }
@@ -257,6 +257,11 @@ function validateInput(input: string): string[] {
           `⚠️ Line ${index + 1} is not valid. Must contain subject, time, and description.`
         );
         return;
+      }
+
+      const desc = parts[2];
+      if (desc.length > 45) {
+        errors.push(`⚠️ Description have to be less than 45 characters.`);
       }
 
       const time = parts[1];
