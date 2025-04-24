@@ -67,8 +67,8 @@ Pendidikan Agama, 10.00-12.30, online
     >
       <h2 class="text-xl md:text-2xl font-semibold text-gray-800 mb-2">📝 Schedule Result</h2>
 
-      <div class="py-2 flex flex-col lg:flex-row lg:gap-x-3 gap-y-2" v-if="imageSrc">
-        <img :src="imageSrc" class="border rounded w-3xl" />
+      <div class="py-2 flex flex-col xl:flex-row xl:gap-x-3 xl:gap-y-0 gap-y-2" v-if="imageSrc">
+        <img :src="imageSrc" class="border rounded w-3xl lg:w-[52rem]" />
 
         <div class="w-full">
           <button
