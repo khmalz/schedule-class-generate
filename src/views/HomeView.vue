@@ -229,7 +229,8 @@ function generateSchedule(input: string): [ScheduleMap, number, number] {
 
   const min_number: number = convertTimeToNumber({ time: min_time, isFloor: true });
   let max_number: number = convertTimeToNumber({ time: max_time, isCeil: true });
-  if ([0, 24].includes(max_number)) max_number = 23;
+
+  if (max_number > 24 || max_number === 0) max_number = 23;
 
   return [scheduleStore.schedule, min_number, max_number];
 }

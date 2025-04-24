@@ -39,7 +39,7 @@ export function convertTimeToNumber({
   }
 
   if (isCeil) {
-    return minute === 0 ? hour : hour + 1;
+    return minute === 0 ? hour : hour + 2;
   }
 
   return hour + minute / 60;
