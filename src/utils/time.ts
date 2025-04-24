@@ -10,7 +10,11 @@ export function parseTime(time: string) {
 
 export function normalizeTime(input: string): string {
   const parts = input.replace(/\./g, ":").split(":");
-  const [hour, minute] = parts;
+  let [hour] = parts;
+  const [minute] = parts;
+
+  if (hour.length === 1) hour = `0${hour}`;
+  if (hour === "24") hour = "00";
 
   const hh = hour.padStart(2, "0");
   const mm = (minute || "00").padStart(2, "0");
@@ -39,4 +43,9 @@ export function convertTimeToNumber({
   }
 
   return hour + minute / 60;
+}
+
+export function formatHourMinute(time: string): string {
+  const [hour, minute] = time.split(".").map((part) => part.padStart(2, "0"));
+  return `${hour}.${minute}`;
 }

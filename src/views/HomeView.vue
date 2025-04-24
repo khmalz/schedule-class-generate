@@ -111,7 +111,7 @@ import type { ScheduleMap } from "@/types/schedule";
 import html2canvas from "html2canvas-pro";
 import ScheduleView from "./ScheduleView.vue";
 import { useScheduleStore } from "@/stores/schedule";
-import { convertTimeToNumber, normalizeTime, parseTime } from "@/utils/time";
+import { convertTimeToNumber, formatHourMinute, normalizeTime, parseTime } from "@/utils/time";
 import { useLoadingStore } from "@/stores/loading";
 import { useWarningsStore } from "@/stores/warning";
 import { useColorStore } from "@/stores/colors";
@@ -214,13 +214,14 @@ function generateSchedule(input: string): [ScheduleMap, number, number] {
       currentDay = foundDay;
     } else if (currentDay) {
       const [subject, time, desc] = line.split(",").map((p) => p.trim());
-      const { start, end } = parseTime(time);
+      const formattedTime = time.split("-").map(formatHourMinute).join("-");
+      const { start, end } = parseTime(formattedTime);
 
       if (!min_time || start < min_time) min_time = start;
       if (!max_time || end > max_time) max_time = end;
 
       const color = colorsStore.getRandomColor();
-      scheduleStore.addSchedule(currentDay, { subject, time, desc, color });
+      scheduleStore.addSchedule(currentDay, { subject, time: formattedTime, desc, color });
     }
   });
 
@@ -234,6 +235,7 @@ function generateSchedule(input: string): [ScheduleMap, number, number] {
 }
 
 function validateInput(input: string): string[] {
+  warningsStore.clearWarnings();
   if (!input) return ["⚠️ Please enter some input."];
 
   const errors: string[] = [];
@@ -264,12 +266,29 @@ function validateInput(input: string): string[] {
         );
       } else {
         const [startStr, endStr] = time.split("-");
-        const today = new Date().toISOString().split("T")[0];
-        const start = new Date(`${today}T${normalizeTime(startStr)}`);
-        const end = new Date(`${today}T${normalizeTime(endStr)}`);
 
-        if (end < start) {
-          errors.push(`⚠️ Invalid time range at line ${index + 1}: end time earlier than start.`);
+        const [startHour, startMinute] = startStr.split(".").map(Number);
+        const [endHour, endMinute] = endStr.split(".").map(Number);
+        if (startHour > 24 || startMinute >= 60 || endHour > 24 || endMinute >= 60) {
+          errors.push(
+            `⚠️ Invalid time range at line ${index + 1}: hours must be ≤ 24 and minutes < 60.`
+          );
+        } else {
+          if (startHour === 24 && startMinute >= 0) {
+            errors.push(`⚠️ Invalid start time at line ${index + 1}: limit (00.00-23.59)`);
+          }
+
+          if (endHour === 24 && endMinute >= 0) {
+            errors.push(`⚠️ Invalid end time at line ${index + 1}: limit (00.00-23.59)`);
+          }
+
+          const today = new Date().toISOString().split("T")[0];
+          const start = new Date(`${today}T${normalizeTime(startStr)}`);
+          const end = new Date(`${today}T${normalizeTime(endStr)}`);
+
+          if (end < start) {
+            errors.push(`⚠️ Invalid time range at line ${index + 1}: end time earlier than start.`);
+          }
         }
       }
     } else {

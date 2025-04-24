@@ -79,7 +79,6 @@ import type { ScheduleMap } from "@/types/schedule";
 import { onMounted, reactive } from "vue";
 
 onMounted(() => {
-  console.log(schedule);
   paintSchedule(schedule);
 });
 
@@ -102,7 +101,6 @@ function paintSchedule(data: ScheduleMap) {
   Object.entries(data).forEach(([day, items]) => {
     items.forEach(({ subject, time, desc, color }) => {
       const [startStr, endStr] = time.split("-").map((t) => t.trim());
-
       createEventOverlay(day, startStr, endStr, subject, desc, color);
     });
   });
