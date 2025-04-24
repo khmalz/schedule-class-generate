@@ -98,13 +98,10 @@ function getQuarterID(day: string, time: string): string {
 }
 
 function paintSchedule(data: ScheduleMap) {
-  console.log("ADA GA WOy");
-
   Object.entries(data).forEach(([day, items]) => {
     items.forEach(({ subject, time, desc, color }) => {
       const [startStr, endStr] = time.split("-").map((t) => t.trim());
 
-      console.log({ day, startStr, endStr, subject, desc });
       createEventOverlay(day, startStr, endStr, subject, desc, color);
     });
   });

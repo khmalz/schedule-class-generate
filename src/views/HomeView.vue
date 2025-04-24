@@ -121,6 +121,8 @@ const warningsStore = useWarningsStore();
 const scheduleStore = useScheduleStore();
 const colorsStore = useColorStore();
 
+scheduleStore.resetSchedule();
+
 const generateImage = async () => {
   loadingStore.startLoading();
   await nextTick();
@@ -192,8 +194,6 @@ function generateSchedule(input: string): [ScheduleMap, number, number] {
 
   const lines = input.trim().split("\n");
 
-  scheduleStore.resetSchedule();
-
   let currentDay = "";
 
   lines.forEach((line: string) => {
@@ -221,7 +221,8 @@ function generateSchedule(input: string): [ScheduleMap, number, number] {
   if (!min_time || !max_time) return [scheduleStore.schedule, 8, 17];
 
   const min_number: number = convertTimeToNumber({ time: min_time, isFloor: true });
-  const max_number: number = convertTimeToNumber({ time: max_time, isCeil: true });
+  let max_number: number = convertTimeToNumber({ time: max_time, isCeil: true });
+  if (max_number == 0) max_number = 24;
 
   return [scheduleStore.schedule, min_number, max_number];
 }
