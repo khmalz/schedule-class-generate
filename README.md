@@ -1,45 +1,43 @@
-# schedule-generate
+# Schedule Class Generate
 
-This template should help get you started developing with Vue 3 in Vite.
+A project where users can create a class schedule/agenda by simply typing in formatted text. With this project, it's suitable for people who are a little lazy to manually create a visual of their schedule. With simple text, users can create visuals of their schedules efficiently.
 
-## Recommended IDE Setup
+## Feature
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+-  Generate schedule from teks
+-  Export to image
 
-## Type Support for `.vue` Imports in TS
+## Running locally
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+**Clone**
 
-## Customize configuration
+```shell
+git clone https://github.com/khmalz/schedule-class-generate.git
+```
 
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
+**Go to Directory**
 
 ```sh
+cd schedule-class-generate
+```
+
+**Install Dependencies**
+
+```sh
+npm install
+yarn install
+pnpm install
 bun install
 ```
 
-### Compile and Hot-Reload for Development
+**Compile and Hot-Reload for Development**
 
 ```sh
 bun dev
 ```
 
-### Type-Check, Compile and Minify for Production
+**Type-Check, Compile and Minify for Production**
 
 ```sh
 bun run build
-```
-
-### Run Unit Tests with [Vitest](https://vitest.dev/)
-
-```sh
-bun test:unit
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-bun lint
 ```
