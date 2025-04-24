@@ -24,9 +24,6 @@ cd schedule-class-generate
 **Install Dependencies**
 
 ```sh
-npm install
-yarn install
-pnpm install
 bun install
 ```
 
