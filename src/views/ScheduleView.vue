@@ -79,6 +79,7 @@ import type { ScheduleMap } from "@/types/schedule";
 import { onMounted, reactive } from "vue";
 
 onMounted(() => {
+  console.log(schedule);
   paintSchedule(schedule);
 });
 

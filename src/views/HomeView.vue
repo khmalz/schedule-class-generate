@@ -93,10 +93,13 @@ Pendidikan Agama, 10.00-12.30, online
       </div>
     </div>
 
-    <div v-if="result">
-      <div ref="imageTarget" class="fixed left-[200vw] top-0 p-4 bg-cyan-950 rounded shadow z-[-1]">
-        <schedule-view key="3" :schedule="result" :times="times" />
-      </div>
+    <div
+      v-if="result"
+      :key="scheduleKey"
+      ref="imageTarget"
+      class="fixed left-[200vw] top-0 p-4 bg-cyan-950 rounded shadow z-[-1]"
+    >
+      <schedule-view :key="scheduleKey" :schedule="result" :times="times" />
     </div>
   </main>
 </template>
@@ -120,8 +123,6 @@ const loadingStore = useLoadingStore();
 const warningsStore = useWarningsStore();
 const scheduleStore = useScheduleStore();
 const colorsStore = useColorStore();
-
-scheduleStore.resetSchedule();
 
 const generateImage = async () => {
   loadingStore.startLoading();
@@ -152,8 +153,11 @@ function downloadImage() {
 const input = ref<string>("");
 const result = ref<ScheduleMap | null>(null);
 const times = ref<{ min: number; max: number }>();
+const scheduleKey = ref(0);
 
 const generate = () => {
+  scheduleStore.resetSchedule();
+
   const warnings = validateInput(input.value);
   warnings.forEach((warning) => warningsStore.addWarning(warning));
 
@@ -165,6 +169,8 @@ const generate = () => {
   const [schedule, min, max] = generateSchedule(input.value);
   result.value = schedule;
   times.value = { min: min, max: max };
+
+  scheduleKey.value++;
 
   nextTick(() => {
     generateImage();
