@@ -1,17 +1,7 @@
 <template>
   <div class="max-w-4xl lg:max-w-7xl mx-auto mt-8">
-    <div class="flex justify-between items-center mb-4">
+    <div class="flex items-center mb-4">
       <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold">Class Schedule</h2>
-      <p class="text-base md:text-lg">
-        By:
-        <a
-          href="https://github.com/khmalz"
-          target="_blank"
-          class="text-cyan-500 text-base md:text-lg font-semibold"
-        >
-          github.com/khmalz
-        </a>
-      </p>
     </div>
 
     <div class="overflow-x-auto border border-gray-300 rounded">
