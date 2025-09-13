@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full flex justify-center mt-5">
+  <div class="w-full flex justify-center mt-3">
     <div
       class="w-full"
       :style="{
@@ -10,7 +10,7 @@
       <textarea
         v-model="model"
         id="input-schedule"
-        class="block p-2.5 w-full text-sm md:text-base text-cyan-900 bg-white rounded-lg border border-gray-300 focus:ring-cyan-800 focus:border-cyan-800 placeholder:text-slate-400"
+        class="block p-2.5 w-full text-sm xl:text-base text-cyan-900 bg-white rounded-lg border border-gray-300 focus:ring-cyan-800 focus:border-cyan-800 placeholder:text-slate-400 placeholder:text-sm placeholder:xl:text-base"
         :style="{
           height: targetHeight ? `${targetHeight}px` : 'auto',
           minHeight: targetHeight ? `${Math.max(200, targetHeight)}px` : undefined,
