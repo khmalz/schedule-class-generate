@@ -75,7 +75,7 @@
       v-if="result && selectedColor"
       :key="`${scheduleKey}-${selectedColor}`"
       ref="imageTarget"
-      :class="['fixed left-[200vw] top-0 p-4 rounded shadow z-[-1]', `bg-${selectedColor}`]"
+      :class="['fixed left-[200vw] top-0 p-4 rounded shadow z-[-1]', colorClasses[selectedColor]]"
     >
       <schedule-view :key="`${scheduleKey}-${selectedColor}`" :schedule="result" :times="times" />
     </div>
@@ -132,6 +132,19 @@ onBeforeUnmount(() => {
 
 // -----------------------------------------------------------------------------------
 
+const colorClasses: Record<string, string> = {
+  "slate-200": "bg-slate-200",
+  "zinc-950": "bg-zinc-950",
+  "red-900": "bg-red-900",
+  "amber-700": "bg-amber-700",
+  "yellow-400": "bg-yellow-400",
+  "emerald-900": "bg-emerald-900",
+  "cyan-950": "bg-cyan-950",
+  "fuchsia-800": "bg-fuchsia-800",
+  "pink-500": "bg-pink-500",
+  "slate-700": "bg-slate-700",
+};
+
 const colors: string[] = [
   "zinc-950",
   "red-900",
@@ -139,7 +152,7 @@ const colors: string[] = [
   "yellow-400",
   "emerald-900",
   "cyan-950",
-  "fuchsia-700",
+  "fuchsia-800",
   "pink-500",
   "slate-700",
 ];
