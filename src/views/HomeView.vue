@@ -90,24 +90,25 @@
 </template>
 
 <script setup lang="ts">
+import html2canvas from "html2canvas-pro";
+import { nextTick, onBeforeUnmount, onMounted, reactive, ref } from "vue";
+
+import type { ScheduleMap } from "@/types/schedule";
+
+import { colorHex, colorOptions } from "@/utils/color";
+import ButtonGenerate from "@/components/button-generate.vue";
 import InputScheduleDesktop from "@/components/input-schedule-desktop.vue";
 import InputScheduleMobile from "@/components/input-schedule-mobile.vue";
-import { nextTick, onMounted, reactive, ref, onBeforeUnmount } from "vue";
-import type { ScheduleMap } from "@/types/schedule";
-import html2canvas from "html2canvas-pro";
-import ScheduleView from "./ScheduleView.vue";
-import { useScheduleStore } from "@/stores/schedule";
-import { convertTimeToNumber, formatHourMinute, normalizeTime, parseTime } from "@/utils/time";
-import { useLoadingStore } from "@/stores/loading";
-import { useWarningsStore } from "@/stores/warning";
-import { useColorStore } from "@/stores/colors";
-import ButtonGenerate from "@/components/button-generate.vue";
 import ScheduleGuide from "@/components/schedule-guide.vue";
+import { scheduleParser } from "@/composable/scheduleParser";
+import { useLoadingStore } from "@/stores/loading";
+import { useScheduleStore } from "@/stores/schedule";
+import { useWarningsStore } from "@/stores/warning";
+
+import ScheduleView from "./ScheduleView.vue";
 
 const guideBoxRef = ref<HTMLElement | null>(null);
-
 const guideSize = reactive({ width: 0, height: 0 });
-
 let ro: ResizeObserver | null = null;
 
 function updateGuideSize() {
@@ -127,7 +128,6 @@ onMounted(async () => {
   });
 
   if (guideBoxRef.value) ro.observe(guideBoxRef.value);
-
   window.addEventListener("resize", updateGuideSize);
 });
 
@@ -139,29 +139,18 @@ onBeforeUnmount(() => {
 
 // -----------------------------------------------------------------------------------
 
-const colorOptions = [
-  { name: "zinc-950", hex: "#09090b", border: "border-gray-500" },
-  { name: "red-900", hex: "#7f1d1d", border: "border-red-500" },
-  { name: "amber-700", hex: "#b45309", border: "border-amber-900" },
-  { name: "yellow-700", hex: "#a65f00", border: "border-yellow-800" },
-  { name: "emerald-900", hex: "#064e3b", border: "border-emerald-500" },
-  { name: "cyan-950", hex: "#083344", border: "border-cyan-400" },
-  { name: "fuchsia-800", hex: "#86198f", border: "border-fuchsia-900" },
-  { name: "pink-500", hex: "#ec4899", border: "border-pink-700" },
-  { name: "slate-700", hex: "#334155", border: "border-slate-400" },
-];
-
-const colorHex: Record<string, string> = Object.fromEntries(
-  colorOptions.map((opt) => [opt.name, opt.hex])
-);
-
 const selectedColor = ref("cyan-950");
 const selectColor = (colorName: string) => (selectedColor.value = colorName);
 
 const input = ref<string>("");
 const result = ref<ScheduleMap | null>(null);
 const times = ref<{ min: number; max: number }>();
-const scheduleKey = ref(0);
+const scheduleKey = ref<number>(0);
+
+const { generateSchedule, validateInput } = scheduleParser();
+const loadingStore = useLoadingStore();
+const warningsStore = useWarningsStore();
+const scheduleStore = useScheduleStore();
 
 const generate = async () => {
   scheduleStore.resetSchedule();
@@ -184,143 +173,27 @@ const generate = async () => {
   await generateImage();
 };
 
-function generateSchedule(input: string): [ScheduleMap, number, number] {
-  let min_time: Date | null = null;
-  let max_time: Date | null = null;
-
-  const dayMap: Record<string, string> = {
-    senin: "Senin",
-    monday: "Senin",
-    selasa: "Selasa",
-    tuesday: "Selasa",
-    rabu: "Rabu",
-    wednesday: "Rabu",
-    kamis: "Kamis",
-    thursday: "Kamis",
-    jumat: "Jumat",
-    friday: "Jumat",
-    sabtu: "Sabtu",
-    saturday: "Sabtu",
-    minggu: "Minggu",
-    sunday: "Minggu",
-  };
-
-  const lines = input.trim().split("\n");
-
-  let currentDay = "";
-
-  lines.forEach((line: string) => {
-    line = line.trim();
-    if (line === "") return;
-
-    const cleanedLine = line.toLowerCase().replace(/\s*:\s*$/, ":");
-    const key = cleanedLine.split(":")[0];
-    const foundDay = dayMap[key];
-
-    if (foundDay) {
-      currentDay = foundDay;
-    } else if (currentDay) {
-      const [subject, time, desc] = line.split(",").map((p) => p.trim());
-      const formattedTime = time.split("-").map(formatHourMinute).join("-");
-      const { start, end } = parseTime(formattedTime);
-
-      if (!min_time || start < min_time) min_time = start;
-      if (!max_time || end > max_time) max_time = end;
-
-      const color = colorsStore.getRandomColor();
-      scheduleStore.addSchedule(currentDay, { subject, time: formattedTime, desc, color });
-    }
-  });
-
-  if (!min_time || !max_time) return [scheduleStore.schedule, 8, 17];
-
-  const min_number: number = convertTimeToNumber({ time: min_time, isFloor: true });
-  let max_number: number = convertTimeToNumber({ time: max_time, isCeil: true });
-
-  if (max_number > 24 || max_number === 0) max_number = 23;
-
-  return [scheduleStore.schedule, min_number, max_number];
-}
-
-function validateInput(input: string): string[] {
-  warningsStore.clearWarnings();
-  if (!input) return ["⚠️ Please enter some input."];
-
-  const errors: string[] = [];
-  const lines = input.trim().split("\n");
-  const validDayPattern = /^[A-Za-z]+:$/;
-  const timePattern = /^\d{1,2}\.\d{2}-\d{1,2}\.\d{2}$/;
-  let currentDay = "";
-
-  lines.forEach((line, index) => {
-    line = line.trim();
-    if (line === "") return;
-
-    if (validDayPattern.test(line)) {
-      currentDay = line.toLowerCase().replace(":", "");
-    } else if (currentDay) {
-      const parts = line.split(",").map((p) => p.trim());
-      if (parts.length !== 3) {
-        errors.push(
-          `⚠️ Line ${index + 1} is not valid. Must contain subject, time, and description.`
-        );
-        return;
-      }
-
-      const desc = parts[2];
-      if (desc.length > 45) {
-        errors.push(`⚠️ Description have to be less than 45 characters.`);
-      }
-
-      const time = parts[1];
-      if (!timePattern.test(time)) {
-        errors.push(
-          `⚠️ Invalid time format at line ${index + 1}: "${time}". Use format (e.g., 10.00-11.00)`
-        );
-      } else {
-        const [startStr, endStr] = time.split("-");
-
-        const [startHour, startMinute] = startStr.split(".").map(Number);
-        const [endHour, endMinute] = endStr.split(".").map(Number);
-        if (startHour > 24 || startMinute >= 60 || endHour > 24 || endMinute >= 60) {
-          errors.push(
-            `⚠️ Invalid time range at line ${index + 1}: hours must be ≤ 24 and minutes < 60.`
-          );
-        } else {
-          if (startHour === 24 && startMinute >= 0) {
-            errors.push(`⚠️ Invalid start time at line ${index + 1}: limit (00.00-23.59)`);
-          }
-
-          if (endHour === 24 && endMinute >= 0) {
-            errors.push(`⚠️ Invalid end time at line ${index + 1}: limit (00.00-23.59)`);
-          }
-
-          const today = new Date().toISOString().split("T")[0];
-          const start = new Date(`${today}T${normalizeTime(startStr)}`);
-          const end = new Date(`${today}T${normalizeTime(endStr)}`);
-
-          if (end < start) {
-            errors.push(`⚠️ Invalid time range at line ${index + 1}: end time earlier than start.`);
-          }
-        }
-      }
-    } else {
-      errors.push(`⚠️ Cannot determine day for line ${index + 1}: "${line}"`);
-    }
-  });
-
-  return errors;
-}
-
 // --------------------------------------------------------------------------------
 
 const imageTarget = ref(null);
 const imageSrc = ref<string | undefined>(undefined);
 
-const loadingStore = useLoadingStore();
-const warningsStore = useWarningsStore();
-const scheduleStore = useScheduleStore();
-const colorsStore = useColorStore();
+const renderCanvas = async (
+  element: HTMLElement,
+  options: { background?: string; type: "jpg" | "png" }
+) => {
+  const canvas = await html2canvas(element, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: options.background ?? null,
+  });
+
+  if (options.type === "jpg") {
+    return canvas.toDataURL("image/jpeg", 1.0);
+  }
+
+  return canvas.toDataURL("image/png");
+};
 
 const generateImage = async () => {
   loadingStore.startLoading();
@@ -332,12 +205,7 @@ const generateImage = async () => {
     return;
   }
 
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: null,
-  });
-  imageSrc.value = canvas.toDataURL("image/png");
+  imageSrc.value = await renderCanvas(element, { type: "png" });
 
   loadingStore.stopLoading();
 };
@@ -348,19 +216,14 @@ const downloadImage = async () => {
   const element = imageTarget.value;
   if (!element) return;
 
-  const bg = colorHex[selectedColor.value] || "#ffffff";
-
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: bg,
+  const dataURL = await renderCanvas(element, {
+    background: colorHex[selectedColor.value] || "#ffffff",
+    type: "jpg",
   });
 
-  const dataURL = canvas.toDataURL("image/jpeg", 1.0);
-
-  const link = document.createElement("a");
-  link.href = dataURL;
-  link.download = "schedule-preview.jpg";
-  link.click();
+  Object.assign(document.createElement("a"), {
+    href: dataURL,
+    download: "schedule-class.jpg",
+  }).click();
 };
 </script>
