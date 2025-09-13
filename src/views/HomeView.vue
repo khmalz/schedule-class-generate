@@ -44,41 +44,40 @@
       class="max-w-4xl lg:max-w-7xl mx-auto p-4 bg-white rounded-2xl shadow-md border mt-5"
       id="result"
     >
-      <h2 class="text-xl md:text-2xl font-semibold text-gray-800 mb-2">📝 Schedule Result</h2>
-
-      <div class="py-2 flex flex-col xl:flex-row xl:gap-x-3 xl:gap-y-0 gap-y-2" v-if="imageSrc">
-        <img :src="imageSrc" class="border rounded w-3xl lg:w-[52rem]" />
-
-        <div class="w-full">
-          <button
-            @click="downloadImage"
-            class="bg-gray-600 hover:bg-gray-700 text-white p-2 md:p-4 lg:p-5 rounded border text-sm md:text-base flex items-center px-4 gap-x-2"
-          >
-            <span>Export to Image</span>
-            <svg
-              class="w-6 h-6 text-white"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="currentColor"
-              viewBox="0 0 24 24"
+      <div class="py-2 flex flex-col xl:gap-x-3 xl:gap-y-0 gap-y-2 items-center" v-if="imageSrc">
+        <div>
+          <img :src="imageSrc" class="border rounded w-3xl lg:w-[60rem]" />
+          <div class="w-full mt-5 flex gap-x-3 justify-between">
+            <button
+              @click="downloadImage"
+              class="bg-gray-700 hover:bg-gray-800 text-white rounded-lg border text-sm md:text-base px-9 py-3"
             >
-              <path
-                fill-rule="evenodd"
-                d="M9 2.221V7H4.221a2 2 0 0 1 .365-.5L8.5 2.586A2 2 0 0 1 9 2.22ZM11 2v5a2 2 0 0 1-2 2H4v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-7Zm.394 9.553a1 1 0 0 0-1.817.062l-2.5 6A1 1 0 0 0 8 19h8a1 1 0 0 0 .894-1.447l-2-4A1 1 0 0 0 13.2 13.4l-.53.706-1.276-2.553ZM13 9.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z"
-                clip-rule="evenodd"
-              />
-            </svg>
-          </button>
+              Export Schedule
+            </button>
+
+            <div class="inline-flex justify-start items-center gap-x-6">
+              <button
+                v-for="(color, i) in colors"
+                :key="color"
+                :class="[
+                  `w-10 h-10 rounded-full bg-${color} border ${borders[i]}`,
+                  selectedColor === color ? 'ring-3 ring-cyan-500 ring-offset-2' : '',
+                ]"
+                @click="selectColor(color)"
+              ></button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <div
-      v-if="result"
-      :key="scheduleKey"
+      v-if="result && selectedColor"
+      :key="`${scheduleKey}-${selectedColor}`"
       ref="imageTarget"
-      class="fixed left-[200vw] top-0 p-4 bg-cyan-950 rounded shadow z-[-1]"
+      :class="['fixed left-[200vw] top-0 p-4 rounded shadow z-[-1]', `bg-${selectedColor}`]"
     >
-      <schedule-view :key="scheduleKey" :schedule="result" :times="times" />
+      <schedule-view :key="`${scheduleKey}-${selectedColor}`" :schedule="result" :times="times" />
     </div>
   </main>
 </template>
@@ -86,7 +85,7 @@
 <script setup lang="ts">
 import InputScheduleDesktop from "@/components/input-schedule-desktop.vue";
 import InputScheduleMobile from "@/components/input-schedule-mobile.vue";
-import { nextTick, onMounted, reactive, ref, onBeforeUnmount } from "vue";
+import { nextTick, onMounted, reactive, ref, onBeforeUnmount, watch } from "vue";
 import type { ScheduleMap } from "@/types/schedule";
 import html2canvas from "html2canvas-pro";
 import ScheduleView from "./ScheduleView.vue";
@@ -131,41 +130,41 @@ onBeforeUnmount(() => {
   window.removeEventListener("resize", updateGuideSize);
 });
 
-// --------------------------------------------------------------------------------
-
-const imageTarget = ref(null);
-const imageSrc = ref<string | undefined>(undefined);
-
-const loadingStore = useLoadingStore();
-const warningsStore = useWarningsStore();
-const scheduleStore = useScheduleStore();
-const colorsStore = useColorStore();
-
-const generateImage = async () => {
-  loadingStore.startLoading();
-  await nextTick();
-
-  const element = imageTarget.value;
-  if (!element) {
-    loadingStore.stopLoading();
-    return;
-  }
-
-  const canvas = await html2canvas(element, { scale: 2, useCORS: true });
-  imageSrc.value = canvas.toDataURL("image/jpg");
-
-  loadingStore.stopLoading();
-};
-
-function downloadImage() {
-  if (!imageSrc.value) return;
-  const link = document.createElement("a");
-  link.href = imageSrc.value;
-  link.download = "schedule-preview.jpg";
-  link.click();
-}
-
 // -----------------------------------------------------------------------------------
+
+const colors: string[] = [
+  "zinc-950",
+  "red-900",
+  "amber-700",
+  "yellow-400",
+  "emerald-900",
+  "cyan-950",
+  "fuchsia-700",
+  "pink-500",
+  "slate-700",
+];
+
+const borders: string[] = [
+  "border-gray-500",
+  "border-red-500",
+  "border-amber-900",
+  "border-yellow-600",
+  "border-emerald-500",
+  "border-cyan-400",
+  "border-fuchsia-900",
+  "border-pink-700",
+  "border-slate-400",
+];
+
+const selectedColor = ref("cyan-950");
+const selectColor = (color: string) => (selectedColor.value = color);
+
+watch(selectedColor, async () => {
+  if (result.value) {
+    await nextTick();
+    generateImage();
+  }
+});
 
 const input = ref<string>("");
 const result = ref<ScheduleMap | null>(null);
@@ -320,5 +319,39 @@ function validateInput(input: string): string[] {
   });
 
   return errors;
+}
+
+// --------------------------------------------------------------------------------
+
+const imageTarget = ref(null);
+const imageSrc = ref<string | undefined>(undefined);
+
+const loadingStore = useLoadingStore();
+const warningsStore = useWarningsStore();
+const scheduleStore = useScheduleStore();
+const colorsStore = useColorStore();
+
+const generateImage = async () => {
+  loadingStore.startLoading();
+  await nextTick();
+
+  const element = imageTarget.value;
+  if (!element) {
+    loadingStore.stopLoading();
+    return;
+  }
+
+  const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+  imageSrc.value = canvas.toDataURL("image/jpg");
+
+  loadingStore.stopLoading();
+};
+
+function downloadImage() {
+  if (!imageSrc.value) return;
+  const link = document.createElement("a");
+  link.href = imageSrc.value;
+  link.download = "schedule-preview.jpg";
+  link.click();
 }
 </script>
