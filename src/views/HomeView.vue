@@ -4,49 +4,28 @@
       Schedule Class Generate by Text
     </h1>
 
-    <div
-      class="max-w-4xl lg:max-w-7xl mx-auto p-4 bg-white rounded-2xl shadow-md border mt-5"
-      id="guide"
-    >
-      <h2 class="text-xl md:text-2xl font-semibold mb-2 text-gray-800">📘 Schedule Input Guide</h2>
-      <p class="text-base md:text-lg text-gray-600 mb-4">
-        Please enter your schedule in the <strong>text area</strong> below using the following
-        format:
-      </p>
+    <div class="flex gap-x-5 gap-y-5 md:gap-y-0 mt-5 flex-col md:flex-row">
+      <div class="md:w-2/3 w-full">
+        <h2 class="text-xl md:text-2xl font-semibold text-white">Schedule Input Guide</h2>
 
-      <pre class="bg-gray-100 text-xs md:text-sm text-gray-800 p-4 rounded-lg whitespace-pre-wrap">
-Senin:
-Matematika, 10.00-11.40, Ruang 101
-
-Selasa:
-Bahasa Inggris, 13.00-14.40, Ruang 501
-Pendidikan Agama, 10.00-12.30, online
-    </pre
-      >
-      <ul class="mt-4 text-base md:text-lg text-gray-700 list-disc list-inside space-y-1">
-        <li>
-          <span class="font-medium">Day</span> must be written at the beginning of the line, ending
-          with a colon (e.g., <code>Senin:</code>).
-        </li>
-        <li>
-          Each subject should be written in one line and separated by a comma, like the format:
-          <code
-            class="bg-gray-500/90 p-0.5 rounded-sm inline-flex text-slate-100 text-xs md:text-sm"
-            >Subject Name, Start-End Time, Description</code
-          >
-        </li>
-        <li>Use 24-hour format for time</li>
-        <li>
-          <span class="font-medium">Make sure</span> the separator between hour and minute is a dot
-          (e.g., <code class="text-sm md:text-base">10.00</code>).
-        </li>
-        <li>
-          Leave an empty line between different days for better readability. (as the example above)
-        </li>
-      </ul>
+        <div ref="guideBoxRef">
+          <schedule-guide />
+        </div>
+      </div>
+      <div class="md:w-1/3 w-full">
+        <h2 class="text-xl md:text-2xl font-semibold text-white">Input Here:</h2>
+        <div class="hidden md:flex">
+          <input-schedule-desktop v-model="input" :targetHeight="guideSize.height" />
+        </div>
+        <div class="md:hidden flex">
+          <input-schedule-mobile v-model="input" />
+        </div>
+      </div>
     </div>
 
-    <input-schedule @click="generate" v-model="input" />
+    <div class="flex mt-5 md:mt-10 items-center justify-center">
+      <button-generate @click="generate" />
+    </div>
 
     <div
       v-if="warningsStore.warnings.length"
@@ -105,8 +84,9 @@ Pendidikan Agama, 10.00-12.30, online
 </template>
 
 <script setup lang="ts">
-import InputSchedule from "@/components/input-schedule.vue";
-import { nextTick, ref } from "vue";
+import InputScheduleDesktop from "@/components/input-schedule-desktop.vue";
+import InputScheduleMobile from "@/components/input-schedule-mobile.vue";
+import { nextTick, onMounted, reactive, ref, onBeforeUnmount } from "vue";
 import type { ScheduleMap } from "@/types/schedule";
 import html2canvas from "html2canvas-pro";
 import ScheduleView from "./ScheduleView.vue";
@@ -115,6 +95,43 @@ import { convertTimeToNumber, formatHourMinute, normalizeTime, parseTime } from 
 import { useLoadingStore } from "@/stores/loading";
 import { useWarningsStore } from "@/stores/warning";
 import { useColorStore } from "@/stores/colors";
+import ButtonGenerate from "@/components/button-generate.vue";
+import ScheduleGuide from "@/components/schedule-guide.vue";
+
+const guideBoxRef = ref<HTMLElement | null>(null);
+
+const guideSize = reactive({ width: 0, height: 0 });
+
+let ro: ResizeObserver | null = null;
+
+function updateGuideSize() {
+  const el = guideBoxRef.value;
+  if (!el) return;
+  const rect = el.getBoundingClientRect();
+  guideSize.width = Math.round(rect.width);
+  guideSize.height = Math.round(rect.height);
+}
+
+onMounted(async () => {
+  await nextTick();
+  updateGuideSize();
+
+  ro = new ResizeObserver(() => {
+    updateGuideSize();
+  });
+
+  if (guideBoxRef.value) ro.observe(guideBoxRef.value);
+
+  window.addEventListener("resize", updateGuideSize);
+});
+
+onBeforeUnmount(() => {
+  if (ro && guideBoxRef.value) ro.unobserve(guideBoxRef.value);
+  if (ro) ro.disconnect();
+  window.removeEventListener("resize", updateGuideSize);
+});
+
+// --------------------------------------------------------------------------------
 
 const imageTarget = ref(null);
 const imageSrc = ref<string | undefined>(undefined);
