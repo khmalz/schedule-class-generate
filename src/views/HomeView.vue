@@ -46,7 +46,13 @@
     >
       <div class="py-2 flex flex-col xl:gap-x-3 xl:gap-y-0 gap-y-2 items-center" v-if="imageSrc">
         <div>
-          <img :src="imageSrc" class="border rounded w-3xl lg:w-[60rem]" />
+          <div
+            class="inline-block p-2 rounded"
+            :style="{ backgroundColor: colorHex[selectedColor] }"
+          >
+            <img :src="imageSrc" class="border rounded w-3xl lg:w-[60rem]" />
+          </div>
+
           <div class="w-full mt-5 flex gap-x-3 justify-between">
             <button
               @click="downloadImage"
@@ -57,13 +63,15 @@
 
             <div class="inline-flex justify-start items-center gap-x-6">
               <button
-                v-for="(color, i) in colors"
-                :key="color"
+                v-for="opt in colorOptions"
+                :key="opt.name"
+                :style="{ backgroundColor: opt.hex }"
                 :class="[
-                  `w-10 h-10 rounded-full bg-${color} border ${borders[i]}`,
-                  selectedColor === color ? 'ring-3 ring-cyan-500 ring-offset-2' : '',
+                  'w-10 h-10 rounded-full border',
+                  opt.border,
+                  selectedColor === opt.name ? 'ring-3 ring-cyan-500 ring-offset-2' : '',
                 ]"
-                @click="selectColor(color)"
+                @click="selectColor(opt.name)"
               ></button>
             </div>
           </div>
@@ -73,11 +81,10 @@
 
     <div
       v-if="result && selectedColor"
-      :key="`${scheduleKey}-${selectedColor}`"
+      class="fixed left-[200vw] top-0 p-4 rounded shadow z-[-1] bg-transparent"
       ref="imageTarget"
-      :class="['fixed left-[200vw] top-0 p-4 rounded shadow z-[-1]', colorClasses[selectedColor]]"
     >
-      <schedule-view :key="`${scheduleKey}-${selectedColor}`" :schedule="result" :times="times" />
+      <schedule-view :schedule="result" :times="times" />
     </div>
   </main>
 </template>
@@ -85,7 +92,7 @@
 <script setup lang="ts">
 import InputScheduleDesktop from "@/components/input-schedule-desktop.vue";
 import InputScheduleMobile from "@/components/input-schedule-mobile.vue";
-import { nextTick, onMounted, reactive, ref, onBeforeUnmount, watch } from "vue";
+import { nextTick, onMounted, reactive, ref, onBeforeUnmount } from "vue";
 import type { ScheduleMap } from "@/types/schedule";
 import html2canvas from "html2canvas-pro";
 import ScheduleView from "./ScheduleView.vue";
@@ -132,59 +139,31 @@ onBeforeUnmount(() => {
 
 // -----------------------------------------------------------------------------------
 
-const colorClasses: Record<string, string> = {
-  "slate-200": "bg-slate-200",
-  "zinc-950": "bg-zinc-950",
-  "red-900": "bg-red-900",
-  "amber-700": "bg-amber-700",
-  "yellow-400": "bg-yellow-400",
-  "emerald-900": "bg-emerald-900",
-  "cyan-950": "bg-cyan-950",
-  "fuchsia-800": "bg-fuchsia-800",
-  "pink-500": "bg-pink-500",
-  "slate-700": "bg-slate-700",
-};
-
-const colors: string[] = [
-  "zinc-950",
-  "red-900",
-  "amber-700",
-  "yellow-400",
-  "emerald-900",
-  "cyan-950",
-  "fuchsia-800",
-  "pink-500",
-  "slate-700",
+const colorOptions = [
+  { name: "zinc-950", hex: "#09090b", border: "border-gray-500" },
+  { name: "red-900", hex: "#7f1d1d", border: "border-red-500" },
+  { name: "amber-700", hex: "#b45309", border: "border-amber-900" },
+  { name: "yellow-700", hex: "#a65f00", border: "border-yellow-800" },
+  { name: "emerald-900", hex: "#064e3b", border: "border-emerald-500" },
+  { name: "cyan-950", hex: "#083344", border: "border-cyan-400" },
+  { name: "fuchsia-800", hex: "#86198f", border: "border-fuchsia-900" },
+  { name: "pink-500", hex: "#ec4899", border: "border-pink-700" },
+  { name: "slate-700", hex: "#334155", border: "border-slate-400" },
 ];
 
-const borders: string[] = [
-  "border-gray-500",
-  "border-red-500",
-  "border-amber-900",
-  "border-yellow-600",
-  "border-emerald-500",
-  "border-cyan-400",
-  "border-fuchsia-900",
-  "border-pink-700",
-  "border-slate-400",
-];
+const colorHex: Record<string, string> = Object.fromEntries(
+  colorOptions.map((opt) => [opt.name, opt.hex])
+);
 
 const selectedColor = ref("cyan-950");
-const selectColor = (color: string) => (selectedColor.value = color);
-
-watch(selectedColor, async () => {
-  if (result.value) {
-    await nextTick();
-    generateImage();
-  }
-});
+const selectColor = (colorName: string) => (selectedColor.value = colorName);
 
 const input = ref<string>("");
 const result = ref<ScheduleMap | null>(null);
 const times = ref<{ min: number; max: number }>();
 const scheduleKey = ref(0);
 
-const generate = () => {
+const generate = async () => {
   scheduleStore.resetSchedule();
 
   const warnings = validateInput(input.value);
@@ -201,9 +180,8 @@ const generate = () => {
 
   scheduleKey.value++;
 
-  nextTick(() => {
-    generateImage();
-  });
+  await nextTick();
+  await generateImage();
 };
 
 function generateSchedule(input: string): [ScheduleMap, number, number] {
@@ -354,17 +332,35 @@ const generateImage = async () => {
     return;
   }
 
-  const canvas = await html2canvas(element, { scale: 2, useCORS: true });
-  imageSrc.value = canvas.toDataURL("image/jpg");
+  const canvas = await html2canvas(element, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: null,
+  });
+  imageSrc.value = canvas.toDataURL("image/png");
 
   loadingStore.stopLoading();
 };
 
-function downloadImage() {
-  if (!imageSrc.value) return;
+const downloadImage = async () => {
+  await nextTick();
+
+  const element = imageTarget.value;
+  if (!element) return;
+
+  const bg = colorHex[selectedColor.value] || "#ffffff";
+
+  const canvas = await html2canvas(element, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: bg,
+  });
+
+  const dataURL = canvas.toDataURL("image/jpeg", 1.0);
+
   const link = document.createElement("a");
-  link.href = imageSrc.value;
+  link.href = dataURL;
   link.download = "schedule-preview.jpg";
   link.click();
-}
+};
 </script>
