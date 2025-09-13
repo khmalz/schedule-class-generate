@@ -83,10 +83,11 @@
 
     <div
       v-if="result && selectedColor"
+      :key="scheduleKey"
       class="fixed left-[200vw] top-0 p-4 rounded shadow z-[-1] bg-transparent"
       ref="imageTarget"
     >
-      <schedule-view :schedule="result" :times="times" />
+      <schedule-view :key="scheduleKey" :schedule="result" :times="times" />
     </div>
   </main>
 </template>
