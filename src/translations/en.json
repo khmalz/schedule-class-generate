@@ -1,0 +1,37 @@
+{
+   "appTitle": "Schedule Class Generate by Text",
+   "schedule": {
+      "title": "Schedule Input Guide",
+      "subtitle": "Please enter your schedule in the text area below using the following format:",
+      "guide": {
+         "texts": [
+            "Day must be written at the beginning of the line, ending with a colon (e.g., Monday:).",
+            "Each subject should be written in one line and separated by a comma, like the format: ",
+            "Use 24-hour format for time",
+            "Make sure the separator between hour and minute is a dot (e.g., 10.00).",
+            "Leave an empty line between different days for better readability. (as the example above)"
+         ],
+         "format": "Subject Name, Start-End Time, Description"
+      },
+      "titleCanvas": "Class Schedule",
+      "day": {
+         "monday": "Monday",
+         "tuesday": "Tuesday",
+         "wednesday": "Wednesday",
+         "thursday": "Thursday",
+         "friday": "Friday",
+         "saturday": "Saturday",
+         "sunday": "Sunday"
+      },
+      "time": "Hour"
+   },
+   "input": {
+      "title": "Input Here:",
+      "placeholder": "Input your schedule here..."
+   },
+   "button": {
+      "generate": "Generate Schedule",
+      "export": "Export Schedule"
+   },
+   "loading": "Rendering preview..."
+}

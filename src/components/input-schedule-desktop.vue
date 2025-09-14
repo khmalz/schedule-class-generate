@@ -15,7 +15,7 @@
           height: targetHeight ? `${targetHeight}px` : 'auto',
           minHeight: targetHeight ? `${Math.max(200, targetHeight)}px` : undefined,
         }"
-        placeholder="Input your schedule here..."
+        :placeholder="$t('input.placeholder')"
       ></textarea>
     </div>
   </div>
