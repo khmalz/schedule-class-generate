@@ -1,13 +1,28 @@
 <template>
   <main class="py-8 max-w-4xl lg:max-w-7xl mx-auto w-full">
-    <h1 class="text-center text-2xl md:text-3xl lg:text-4xl font-bold">
-      Schedule Class Generate by Text
-    </h1>
+    <div class="hidden xl:flex items-center justify-between">
+      <div class="w-[120px]"></div>
+
+      <h1 class="text-center text-2xl md:text-3xl lg:text-4xl font-bold">
+        {{ $t("appTitle") }}
+      </h1>
+
+      <div>
+        <DropdownInput v-model="selectedLang" :options="languageOptions" />
+      </div>
+    </div>
+
+    <div class="flex xl:hidden flex-col items-center gap-2">
+      <h1 class="text-center text-2xl md:text-3xl font-bold">
+        {{ $t("appTitle") }}
+      </h1>
+      <DropdownInput v-model="selectedLang" :options="languageOptions" />
+    </div>
 
     <div class="flex gap-x-5 gap-y-5 md:gap-y-0 mt-5 flex-col md:flex-row">
       <div class="md:w-2/3 w-full">
         <h2 class="text-lg md:text-xl lg:text-2xl font-semibold text-white">
-          Schedule Input Guide
+          {{ $t("schedule.title") }}
         </h2>
 
         <div ref="guideBoxRef">
@@ -15,7 +30,9 @@
         </div>
       </div>
       <div class="md:w-1/3 w-full">
-        <h2 class="text-lg md:text-xl lg:text-2xl font-semibold text-white">Input Here:</h2>
+        <h2 class="text-lg md:text-xl lg:text-2xl font-semibold text-white">
+          {{ $t("input.title") }}
+        </h2>
         <div class="hidden md:flex">
           <input-schedule-desktop v-model="input" :targetHeight="guideSize.height" />
         </div>
@@ -39,7 +56,7 @@
       </ul>
     </div>
 
-    <div v-if="loadingStore.isLoading" class="text-white mt-2">Rendering preview...</div>
+    <div v-if="loadingStore.isLoading" class="text-white mt-2">{{ $t("loading") }}</div>
 
     <div
       v-if="warningsStore.warnings.length === 0 && result && !loadingStore.isLoading"
@@ -60,7 +77,7 @@
               @click="downloadImage"
               class="bg-gray-700 hover:bg-gray-800 text-white rounded-lg border text-[10px] sm:text-sm lg:text-base px-3 sm:px-5 py-2 md:px-9 md:py-3"
             >
-              Export Schedule
+              {{ $t("button.export") }}
             </button>
 
             <div class="inline-flex justify-start items-center gap-x-3 sm:gap-x-4 md:gap-x-6">
@@ -94,7 +111,32 @@
 
 <script setup lang="ts">
 import html2canvas from "html2canvas-pro";
-import { nextTick, onBeforeUnmount, onMounted, reactive, ref } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
+const { locale } = useI18n();
+const route = useRoute();
+const router = useRouter();
+
+const languageOptions = [
+  { label: "Indonesia", value: "id" },
+  { label: "English", value: "en" },
+];
+
+const selectedLang = ref<string>(
+  (Array.isArray(route.params.locale) ? route.params.locale[0] : route.params.locale) ??
+    locale.value ??
+    "id"
+);
+
+watch(selectedLang, (newLocale) => {
+  if (newLocale && newLocale !== route.params.locale) {
+    router.push({
+      name: route.name ?? "home",
+      params: { ...route.params, locale: newLocale },
+      query: route.query,
+      hash: route.hash,
+    });
+  }
+});
 
 import type { ScheduleMap } from "@/types/schedule";
 
@@ -109,6 +151,9 @@ import { useScheduleStore } from "@/stores/schedule";
 import { useWarningsStore } from "@/stores/warning";
 
 import ScheduleView from "./ScheduleView.vue";
+import DropdownInput from "@/components/dropdown-input.vue";
+import { useI18n } from "vue-i18n";
+import { useRoute, useRouter } from "vue-router";
 
 const guideBoxRef = ref<HTMLElement | null>(null);
 const guideSize = reactive({ width: 0, height: 0 });

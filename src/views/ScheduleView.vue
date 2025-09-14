@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-4xl lg:max-w-7xl mx-auto mt-8">
     <div class="flex items-center mb-4">
-      <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold">Class Schedule</h2>
+      <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold">{{ $t("schedule.titleCanvas") }}</h2>
     </div>
 
     <div class="overflow-x-auto border border-gray-300 rounded">
@@ -9,7 +9,7 @@
         <thead>
           <tr class="bg-blue-800 text-white">
             <th class="w-20 text-sm md:text-base lg:text-xl p-2 border border-white text-center">
-              Waktu
+              {{ $t("schedule.time") }}
             </th>
             <th
               v-for="day in days"
@@ -59,14 +59,18 @@ const { schedule, times = { min: 8, max: 17 } } = defineProps<{
   times?: { min: number; max: number };
 }>();
 
-const days = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
+import type { ScheduleMap } from "@/types/schedule";
+import { onMounted, reactive } from "vue";
+import { useI18n } from "vue-i18n";
+const { tm } = useI18n();
+
+const daysObj = tm("schedule.days");
+const days = Object.values(daysObj);
+
 const hours: string[] = reactive([]);
 for (let i = times.min; i <= times.max; i++) {
   hours.push(`${String(i).padStart(2, "0")}:00`);
 }
-
-import type { ScheduleMap } from "@/types/schedule";
-import { onMounted, reactive } from "vue";
 
 onMounted(() => {
   paintSchedule(schedule);

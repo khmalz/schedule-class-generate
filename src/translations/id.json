@@ -1,0 +1,37 @@
+{
+   "appTitle": "Generate Jadwal Kelas dari Teks",
+   "schedule": {
+      "title": "Panduan Input Jadwal",
+      "subtitle": "Silakan masukkan jadwal Anda di area teks di bawah ini menggunakan format berikut:",
+      "guide": {
+         "texts": [
+            "Hari harus ditulis di awal baris, diakhiri dengan titik dua (contoh: Senin:).",
+            "Masing-masing mata pelajaran harus ditulis dalam satu baris dan dipisahkan dengan koma, seperti format: ",
+            "Gunakan format waktu 24 jam",
+            "Pastikan pemisah antara jam dan menit adalah titik (contoh: 10.00).",
+            "Biarkan baris kosong antara hari yang berbeda untuk kemudahan yang lebih baik. (seperti contoh di atas)"
+         ],
+         "format": "Nama Mata Pelajaran, Waktu Mulai-Akhir, Keterangan"
+      },
+      "titleCanvas": "Jadwal Kelas",
+      "days": {
+         "monday": "Senin",
+         "tuesday": "Selasa",
+         "wednesday": "Rabu",
+         "thursday": "Kamis",
+         "friday": "Jumat",
+         "saturday": "Sabtu",
+         "sunday": "Minggu"
+      },
+      "time": "Waktu"
+   },
+   "input": {
+      "title": "Masukan di sini:",
+      "placeholder": "Masukan jadwal Anda di sini..."
+   },
+   "button": {
+      "generate": "Generate Jadwal",
+      "export": "Ekspor Jadwal"
+   },
+   "loading": "Memuat pratinjau..."
+}
